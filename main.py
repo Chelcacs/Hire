@@ -555,6 +555,7 @@ if __name__ == '__main__':
         data.read_config(args.config)
         # data.show_data_summary()
         decode_results, pred_scores = load_model_test(data, 'test')
+        print(decode_results)
     else:
         print("Invalid argument! Please use valid arguments! (train/test/decode)")
 
