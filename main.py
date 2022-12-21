@@ -13,6 +13,7 @@ from model.seqlabel import SeqLabel
 from utils.data import Data
 import os
 import codecs
+from seqeval.metrics import classification_report
 
 try:
     import cPickle as pickle
@@ -499,6 +500,62 @@ def load_model_test(data, name):
         print("%s: time:%.2fs, speed:%.2fst/s; acc: %.4f"%(name, time_cost, speed, acc))
     return pred_results, pred_scores
 
+def word2features(sent, i):
+    word = sent[i][0]
+
+    features = {
+        'bias': 1.0,
+        'word.lower()': word.lower(),
+        'word[-3:]': word[-3:],
+        'word[-2:]': word[-2:],
+        'word.isupper()': word.isupper(),
+        'word.istitle()': word.istitle(),
+        'word.isdigit()': word.isdigit(),
+    }
+    if i > 0:
+        word1 = sent[i-1][0]
+        features.update({
+            '-1:word.lower()': word1.lower(),
+            '-1:word.istitle()': word1.istitle(),
+            '-1:word.isupper()': word1.isupper(),
+        })
+    else:
+        features['BOS'] = True
+
+    if i < len(sent)-1:
+        word1 = sent[i+1][0]
+        features.update({
+            '+1:word.lower()': word1.lower(),
+            '+1:word.istitle()': word1.istitle(),
+            '+1:word.isupper()': word1.isupper(),
+        })
+    else:
+        features['EOS'] = True
+
+    return features
+
+def sent2features(sent):
+    return [word2features(sent, i) for i in range(len(sent))]
+
+def sent2labels(sent):
+    return [label for token, label in sent]
+
+def sent2tokens(sent):
+    return [token for token, label in sent]
+
+def reverse_data_format(datapath):
+    f = open(datapath, 'r')
+    lines = f.readlines()
+    sentence = []
+    sentenceS = []
+    for line in lines:
+        if not line == "\n":
+            couple = tuple(line.strip('\n').split('\t'))
+            sentence.append(couple)
+        else:
+            sentenceS.append(sentence) 
+            sentence = []
+    return sentenceS
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Tuning with NCRF++')
@@ -555,7 +612,10 @@ if __name__ == '__main__':
         data.read_config(args.config)
         # data.show_data_summary()
         decode_results, pred_scores = load_model_test(data, 'test')
-        print(decode_results)
+        test_sents = reverse_data_format(data.test_dir)
+        labels = [sent2labels(s) for s in test_sents]
+        report = classification_report(labels, decode_results, digits=4)
+        print(report)
     else:
         print("Invalid argument! Please use valid arguments! (train/test/decode)")
 

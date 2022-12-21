@@ -1,18 +1,5 @@
-
-# import matplotlib.pyplot as plt
-# plt.style.use('ggplot')
-from itertools import chain
-
-import nltk
-import sklearn
-import scipy.stats
-# from sklearn.metrics import make_scorer, classification_report, accuracy_score
-from sklearn.model_selection import train_test_split, cross_val_predict, cross_val_score
 from datasets import load_dataset
-from seqeval.metrics import classification_report
-import json
 
-# import data
 
 data = load_dataset("conll2003")
 data
